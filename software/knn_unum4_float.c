@@ -1,4 +1,3 @@
-
 #include "system.h"
 #include "periphs.h"
 #include <iob-uart.h>
@@ -112,10 +111,11 @@ void insert_unum4 (struct neighbor_unum4 element, unsigned int position) {
 }
 
 ///////////////////////////////////////////////////////////////////
-int main() {
+int knn() {
 
   unsigned long long elapsed;
   unsigned int elapsedu;
+  double random;
 
   //init uart and timer
   uart_init(UART_BASE, FREQ/BAUD);
@@ -136,7 +136,8 @@ int main() {
 
   //init dataset
   for (int i=0; i<N; i++) {
-
+    random = 4.0;
+   
     //init coordinates
     data_float[i].x = (float) random_real(-100.0, 100.0);
     data_float[i].y = (float) random_real(-100.0, 100.0);
@@ -253,7 +254,7 @@ int main() {
 
 
 ///////////////////////////////////////////////////////////////////
-int knn() {
+int main() {
 
   unsigned long long elapsed;
   unsigned int elapsedu;
