@@ -1,12 +1,10 @@
+/*
 #include "system.h"
 #include "periphs.h"
 #include <iob-uart.h>
 #include "iob_timer.h"
 #include "iob_knn.h"
-#include "random.h" //random generator for bare metal
 
-//uncomment to use rand from C lib 
-//#define cmwc_rand rand
 
 #ifdef DEBUG //type make DEBUG=1 to print debug info
 #define S 12  //random seed
@@ -204,4 +202,4 @@ int main() {
   
 }
 
-
+*/

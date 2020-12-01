@@ -4,8 +4,10 @@ include $(KNN_DIR)/core.mk
 KNN_SW_DIR:=$(KNN_DIR)/software
 
 #define
+RANDOM:= $(shell bash -c 'echo $$RANDOM')
 ifeq ($D,1)
 DEFINE+=-DDEBUG
+DEFINE+=-DSEED=$(RANDOM)
 endif
 
 #include
