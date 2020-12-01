@@ -1,9 +1,12 @@
-/*
 #include "system.h"
 #include "periphs.h"
 #include <iob-uart.h>
 #include "iob_timer.h"
 #include "iob_knn.h"
+#include "math.h"
+#include "stdlib.h"
+#include "iob_unum4.h"
+#include "stdint.h"
 
 
 #ifdef DEBUG //type make DEBUG=1 to print debug info
@@ -20,50 +23,56 @@
 #define M 100 
 #endif
 
-#define INFINITE ~0
+
 
 //
 //Data structures
 //
 
 //labeled dataset
-struct datum {
-  short x;
-  short y;
+struct datum_double{
+  double x;
+  double y;
   unsigned char label;
-} data[N], x[M];
+} data_double[N], x_double[M];
 
 //neighbor info
-struct neighbor {
+struct neighbor_double {
   unsigned int idx; //index in dataset array
-  unsigned int dist; //distance to test point
-} neighbor[K];
+  double dist; //distance to test point
+} neighbor_double[K];
 
 //
 //Functions
 //
 
+//double random generator
+double random_double(double min, double max) {
+  double d = (double) rand()/RAND_MAX;
+  return (min+ d*(max-min));
+}
+
 //square distance between 2 points a and b
-unsigned int sq_dist( struct datum a, struct datum b) {
-  short X = a.x-b.x;
-  unsigned int X2=X*X;
-  short Y = a.y-b.y;
-  unsigned int Y2=Y*Y;
+double sq_dist_double( struct datum_double a, struct datum_double b) {
+  double X = a.x-b.x;
+  double X2=X*X;
+  double Y = a.y-b.y;
+  double Y2=Y*Y;
   return (X2 + Y2);
 }
 
 //insert element in ordered array of neighbours
-void insert (struct neighbor element, unsigned int position) {
+void insert_double (struct neighbor_double element, unsigned int position) {
   for (int j=K-1; j>position; j--)
-    neighbor[j] = neighbor[j-1];
+    neighbor_double[j] = neighbor_double[j-1];
 
-  neighbor[position] = element;
+  neighbor_double[position] = element;
 
 }
 
 
 ///////////////////////////////////////////////////////////////////
-int main() {
+int knn_double() {
 
   unsigned long long elapsed;
   unsigned int elapsedu;
@@ -83,30 +92,30 @@ int main() {
   int votes_acc[C] = {0};
 
   //generate random seed 
-  random_init(S);
+  srand(SEED);
 
   //init dataset
   for (int i=0; i<N; i++) {
 
     //init coordinates
-    data[i].x = (short) cmwc_rand();
-    data[i].y = (short) cmwc_rand();
+    data_double[i].x = random_double(-100.0,100.0); 
+    data_double[i].y = random_double(-100.0,100.0);
 
     //init label
-    data[i].label = (unsigned char) (cmwc_rand()%C);
+    data_double[i].label = (unsigned char) (rand()%C);
   }
 
 #ifdef DEBUG
   uart_printf("\n\n\nDATASET\n");
   uart_printf("Idx \tX \tY \tLabel\n");
   for (int i=0; i<N; i++)
-    uart_printf("%d \t%d \t%d \t%d\n", i, data[i].x,  data[i].y, data[i].label);
+    uart_printf("%d \t%lld \t%lld \t%d\n", i, data_double[i].x,  data_double[i].y, data_double[i].label);
 #endif
   
   //init test points
   for (int k=0; k<M; k++) {
-    x[k].x  = (short) cmwc_rand();
-    x[k].y  = (short) cmwc_rand();
+    x_double[k].x  = random_double(-100.0,100.0); 
+    x_double[k].y  = random_double(-100.0,100.0); 
     //x[k].label will be calculated by the algorithm
   }
 
@@ -114,7 +123,7 @@ int main() {
   uart_printf("\n\nTEST POINTS\n");
   uart_printf("Idx \tX \tY\n");
   for (int k=0; k<M; k++)
-    uart_printf("%d \t%d \t%d\n", k, x[k].x, x[k].y);
+    uart_printf("%d \t%lld \t%lld\n", k, x_double[k].x, x_double[k].y);
 #endif
   
   //
@@ -132,25 +141,25 @@ int main() {
 
     //init all k neighbors infinite distance
     for (int j=0; j<K; j++)
-      neighbor[j].dist = INFINITE;
+      neighbor_double[j].dist = INFINITY;
 
 #ifdef DEBUG
     uart_printf("Datum \tX \tY \tLabel \tDistance\n");
 #endif
     for (int i=0; i<N; i++) { //for all dataset points
       //compute distance to x[k]
-      unsigned int d = sq_dist(x[k], data[i]);
+      double d = sq_dist_double(x_double[k], data_double[i]);
 
       //insert in ordered list
       for (int j=0; j<K; j++)
-        if ( d < neighbor[j].dist ) {
-          insert( (struct neighbor){i,d}, j);
+        if ( d < neighbor_double[j].dist ) {
+          insert_double( (struct neighbor_double){i,d}, j);
           break;
         }
 
 #ifdef DEBUG
       //dataset
-      uart_printf("%d \t%d \t%d \t%d \t%d\n", i, data[i].x, data[i].y, data[i].label, d);
+      uart_printf("%d \t%lld \t%lld \t%d \t%lld\n", i, data_double[i].x, data_double[i].y, data_double[i].label, d);
 #endif
 
     }
@@ -165,25 +174,25 @@ int main() {
 
     //make neighbours vote
     for (int j=0; j<K; j++) { //for all neighbors
-      if ( (++votes[data[neighbor[j].idx].label]) > best_votation ) {
-        best_voted = data[neighbor[j].idx].label;
+      if ( (++votes[data_double[neighbor_double[j].idx].label]) > best_votation ) {
+        best_voted = data_double[neighbor_double[j].idx].label;
         best_votation = votes[best_voted];
       }
     }
 
-    x[k].label = best_voted;
+    x_double[k].label = best_voted;
 
     votes_acc[best_voted]++;
     
 #ifdef DEBUG
-    uart_printf("\n\nNEIGHBORS of x[%d]=(%d, %d):\n", k, x[k].x, x[k].y);
+    uart_printf("\n\nNEIGHBORS of x[%d]=(%lld, %lld):\n", k, x_double[k].x, x_double[k].y);
     uart_printf("K \tIdx \tX \tY \tDist \t\tLabel\n");
     for (int j=0; j<K; j++)
-      uart_printf("%d \t%d \t%d \t%d \t%d \t%d\n", j+1, neighbor[j].idx, data[neighbor[j].idx].x,  data[neighbor[j].idx].y, neighbor[j].dist,  data[neighbor[j].idx].label);
+      uart_printf("%d \t%lld \t%lld \t%lld \t%lld \t%d\n", j+1, neighbor_double[j].idx, data_double[neighbor_double[j].idx].x,  data_double[neighbor_double[j].idx].y, neighbor_double[j].dist,  data_double[neighbor_double[j].idx].label);
     
     uart_printf("\n\nCLASSIFICATION of x[%d]:\n", k);
     uart_printf("X \tY \tLabel\n");
-    uart_printf("%d \t%d \t%d\n\n\n", x[k].x, x[k].y, x[k].label);
+    uart_printf("%d \t%d \t%d\n\n\n", x_double[k].x, x_double[k].y, x_double[k].label);
 
 #endif
 
@@ -202,4 +211,3 @@ int main() {
   
 }
 
-*/

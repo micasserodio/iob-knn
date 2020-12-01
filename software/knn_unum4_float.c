@@ -111,39 +111,19 @@ void insert_unum4 (struct neighbor_unum4 element, unsigned int position) {
 }
 
 ///////////////////////////////////////////////////////////////////
-int knn() {
+void knn_float(double random[], double test_points[], unsigned char label_rand[], int votes_acc[]) {
 
-  unsigned long long elapsed;
-  unsigned int elapsedu;
-  double random;
-
-  //init uart and timer
-  uart_init(UART_BASE, FREQ/BAUD);
-  uart_printf("\nInit timer\n");
-  uart_txwait();
-
-  timer_init(TIMER_BASE);
-  //read current timer count, compute elapsed time
-  //elapsed  = timer_get_count();
-  //elapsedu = timer_time_us();
-
-
-  //int vote accumulator
-  int votes_acc[C] = {0};
-
-  //generate random seed 
-  srand(-1);
 
   //init dataset
   for (int i=0; i<N; i++) {
-    random = 4.0;
+
    
     //init coordinates
-    data_float[i].x = (float) random_real(-100.0, 100.0);
-    data_float[i].y = (float) random_real(-100.0, 100.0);
+    data_float[i].x = (float) random[i];
+    data_float[i].y = (float) random[N+i];
 
     //init label
-    data_float[i].label = (unsigned char) (rand()%C);
+    data_float[i].label = label_rand[i];
   }
 
 #ifdef DEBUG
@@ -155,8 +135,8 @@ int knn() {
   
   //init test points
   for (int k=0; k<M; k++) {
-    x_float[k].x  = (float) random_real(-100.0, 100.0);
-    x_float[k].y  = (float) random_real(-100.0, 100.0);
+    x_float[k].x  = (float) test_points[k];
+    x_float[k].y  = (float) test_points[M+k];
     //x[k].label will be calculated by the algorithm
   }
 
@@ -239,59 +219,34 @@ int knn() {
 
   } //all test points classified
 
-  //stop knn here
-  //read current timer count, compute elapsed time
-  elapsedu = timer_time_us(TIMER_BASE);
-  uart_printf("\nExecution time: %dus @%dMHz\n\n", elapsedu, FREQ/1000000);
-
   
   //print classification distribution to check for statistical bias
   for (int l=0; l<C; l++)
     uart_printf("%d ", votes_acc[l]);
   uart_printf("\n");
+ 
   
 }
 
 
 ///////////////////////////////////////////////////////////////////
-int main() {
+void knn_unum4(double random[], double test_points[], unsigned char label_rand[], int votes_acc[]) {
 
-  unsigned long long elapsed;
-  unsigned int elapsedu;
-  double random;
   int32_t failed,overflow=0;
   Unum4Unpacked dist;
 
-
-  //init uart and timer
-  uart_init(UART_BASE, FREQ/BAUD);
-  uart_printf("\nInit timer\n");
-  uart_txwait();
-
-  timer_init(TIMER_BASE);
-  //read current timer count, compute elapsed time
-  //elapsed  = timer_get_count();
-  //elapsedu = timer_time_us();
-
-
-  //int vote accumulator
-  int votes_acc[C] = {0};
-
-  //generate random seed 
-  srand(-1);
-
-
+  
+ 
   //init dataset
   for (int i=0; i<N; i++) {
 
     //init coordinates
-    random = random_real(-100.0,100.0); 
-    data_unum4[i].x = double2unum4(*(int64_t*)&random,&failed);
-    random = random_real(-100.0,100.0);
-    data_unum4[i].y = double2unum4(*(int64_t*)&random,&failed);
+   
+    data_unum4[i].x = double2unum4(*(int64_t*)&random[i],&failed);
+    data_unum4[i].y = double2unum4(*(int64_t*)&random[N+i],&failed);
 
     //init label
-    data_unum4[i].label = (unsigned char) (rand()%C);
+    data_unum4[i].label = label_rand[i];
   }
 
 #ifdef DEBUG
@@ -303,10 +258,9 @@ int main() {
   
   //init test points
   for (int k=0; k<M; k++) {
-    random = random_real(-100.0,100.0); 
-    x_unum4[k].x  = double2unum4(*(int64_t*)&random,&failed);
-     random = random_real(-100.0,100.0);
-    x_unum4[k].y  = double2unum4(*(int64_t*)&random,&failed);
+
+    x_unum4[k].x  = double2unum4(*(int64_t*)&test_points[k],&failed);
+    x_unum4[k].y  = double2unum4(*(int64_t*)&test_points[M+k],&failed);
     //x[k].label will be calculated by the algorithm
   }
 
@@ -390,16 +344,64 @@ int main() {
 
   } //all test points classified
 
-  //stop knn here
-  //read current timer count, compute elapsed time
-  elapsedu = timer_time_us(TIMER_BASE);
-  uart_printf("\nExecution time: %dus @%dMHz\n\n", elapsedu, FREQ/1000000);
 
   
   //print classification distribution to check for statistical bias
   for (int l=0; l<C; l++)
     uart_printf("%d ", votes_acc[l]);
   uart_printf("\n");
+ 
   
 }
 
+int main () {
+
+  unsigned long long elapsed;
+  unsigned int elapsedu;
+  unsigned char label_rand[N];
+  double random[2*N];
+  double test_points[2*M];
+  int votes_acc_float[C] = {0};
+  int votes_acc_unum4[C] = {0};
+  
+  
+  //init uart and timer
+  uart_init(UART_BASE, FREQ/BAUD);
+  uart_printf("\nInit timer\n");
+  uart_txwait();
+
+  timer_init(TIMER_BASE);
+  //read current timer count, compute elapsed time
+  //elapsed  = timer_get_count();
+  //elapsedu = timer_time_us();
+  
+  
+  //generate random seed 
+   srand(SEED);
+   
+   for (int i=0; i<2*N; i++) 
+     random[i] = random_real(-100.0,100.0); 
+     
+   for (int t=0; t<N; t++) 
+     label_rand[t] = (unsigned char) (rand()%C);
+     
+   for (int k=0; k<2*M; k++)
+     test_points[k] = random_real(-100.0,100.0);
+   
+   
+   knn_float(random,test_points,label_rand,votes_acc_float);
+   knn_unum4(random,test_points,label_rand,votes_acc_unum4);
+   
+   for (int n=0; n<C; n++){
+     if(votes_acc_float[n]!=votes_acc_unum4[n])
+       break;
+     uart_printf("Passed: %d\n",n);
+   }
+   
+  //stop knn here
+  //read current timer count, compute elapsed time
+  elapsedu = timer_time_us(TIMER_BASE);
+  uart_printf("\nExecution time: %dus @%dMHz\n\n", elapsedu, FREQ/1000000);
+
+
+}
