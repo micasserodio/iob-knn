@@ -5,9 +5,9 @@ KNN_SW_DIR:=$(KNN_DIR)/software
 
 #define
 RANDOM:= $(shell bash -c 'echo $$RANDOM')
+DEFINE+=$(defmacro)SEED=$(RANDOM)
 ifeq ($D,1)
 DEFINE+=-DDEBUG
-DEFINE+=-DSEED=$(RANDOM)
 endif
 
 #include

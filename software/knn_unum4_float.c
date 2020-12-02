@@ -23,7 +23,7 @@
 #define K 10  
 #define C 4  
 #define M 100
-#define RAND_MAX 1000000
+
 #endif
 
 
@@ -354,7 +354,7 @@ void knn_unum4(double random[], double test_points[], unsigned char label_rand[]
   
 }
 
-int main () {
+int knn_float_unum4 () {
 
   unsigned long long elapsed;
   unsigned int elapsedu;
