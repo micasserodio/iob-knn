@@ -354,7 +354,7 @@ void knn_unum4(double random[], double test_points[], unsigned char label_rand[]
   
 }
 
-int knn_float_unum4 () {
+int knn_unum4_float () {
 
   unsigned long long elapsed;
   unsigned int elapsedu;
